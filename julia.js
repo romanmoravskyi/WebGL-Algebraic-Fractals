@@ -79,9 +79,7 @@ $(document).ready(function() {
     window.requestAnimationFrame(renderFrame);
     console.log("Set max iter: " + max_iterations);
   });
-});
 
-function main() {
   var mandelbrot_program = ComplileShaders();
 
   // find uniform locations
@@ -110,7 +108,7 @@ function main() {
 
   // display initial frame
   renderFrame();
-}
+});
 
 var renderFrame = function() {
   // bind inputs & render frame
