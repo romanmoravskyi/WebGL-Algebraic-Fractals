@@ -6,7 +6,7 @@ var stop_zooming = true;
 var zoom_factor = 1.0;
 var max_iterations = 1000;
 var initial_max_iter = max_iterations;
-var autoIter = false;
+var isProgramCompiled = false;
 
 // canvas elements
 var canvas_element;
@@ -21,34 +21,35 @@ var julia_value_uniform;
 
 $(document).ready(function() {
   $("#btnRestoreZoom").click(function() {
-    zoom_center = [0.0, 0.0];
-    zoom_size = 1.0;
-    window.requestAnimationFrame(renderFrame);
-    console.log("Restoring zoom");
+    if (isProgramCompiled) {
+      zoom_center = [0.0, 0.0];
+      zoom_size = 1.0;
+      window.requestAnimationFrame(renderFrame);
+      console.log("Restoring zoom");
+    }
   });
 
   $("#maxIter").val(max_iterations);
 
   $("#maxIter").on("input", () => {
-    max_iterations = $("#maxIter").val();
-    window.requestAnimationFrame(renderFrame);
-    console.log("Set max iter: " + max_iterations);
+    if (isProgramCompiled) {
+      max_iterations = $("#maxIter").val();
+      window.requestAnimationFrame(renderFrame);
+      console.log("Set max iter: " + max_iterations);
+    }
   });
 
-  $("autoZoomIter").on("change", () => {
-    autoIter = $("input.autoZoomIter").is(":checked");
-    console.log("Set auto Zoom Iter: " + autoIter);
-    window.requestAnimationFrame(renderFrame);
+  $("#applyBtn").on("click", () => {
+    let formula = $("#formulaInput").val();
+    let breakCondition = $("#breakCondition").val();
+    let fractalProgram = ComplileShaders(formula, breakCondition);
+    SetUniformLocations(fractalProgram);
+    renderFrame();
   });
-});
 
-function main() {
-  var mandelbrot_program = ComplileShaders();
+  canvas_element = document.getElementById("maincanvas");
+  gl = canvas_element.getContext("webgl");
 
-  // find uniform locations
-  SetUniformLocations(mandelbrot_program);
-
-  // input handling
   canvas_element.onmousedown = function(e) {
     var x_part = e.offsetX / canvas_element.width;
     var y_part = e.offsetY / canvas_element.height;
@@ -56,27 +57,24 @@ function main() {
       zoom_center[0] - zoom_size / 2.0 + x_part * zoom_size;
     target_zoom_center[1] =
       zoom_center[1] + zoom_size / 2.0 - y_part * zoom_size;
-    console.log(target_zoom_center);
     stop_zooming = false;
     zoom_factor = e.buttons & 1 ? 0.99 : 1.01;
     renderFrame();
     return true;
   };
+
   canvas_element.oncontextmenu = function(e) {
-    return true;
+    return false;
   };
+
   canvas_element.onmouseup = function(e) {
     stop_zooming = true;
   };
+});
 
-  // display initial frame
-  renderFrame();
-}
-
-var renderFrame = function() {
+function renderFrame() {
   // bind inputs & render frame
   const MinAutoFrames = 1000;
-
   gl.uniform2f(zoom_center_uniform, zoom_center[0], zoom_center[1]);
   gl.uniform1f(zoom_size_uniform, zoom_size);
   gl.uniform1i(max_iterations_uniform, max_iterations);
@@ -87,52 +85,43 @@ var renderFrame = function() {
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
-
   if (!stop_zooming) {
-    if (autoIter) {
-      max_iterations -= 10;
-      if (max_iterations < 50) {
-        max_iterations = 50;
-      }
-    }
-
     zoom_size *= zoom_factor;
     zoom_center[0] += 0.1 * (target_zoom_center[0] - zoom_center[0]);
     zoom_center[1] += 0.1 * (target_zoom_center[1] - zoom_center[1]);
-
-    window.requestAnimationFrame(renderFrame);
-  } else if (autoIter && max_iterations < MinAutoFrames) {
-    max_iterations += 10;
-
     window.requestAnimationFrame(renderFrame);
   }
-};
+}
 
-function SetUniformLocations(mandelbrot_program) {
-  zoom_center_uniform = gl.getUniformLocation(
-    mandelbrot_program,
-    "u_zoomCenter"
-  );
-  zoom_size_uniform = gl.getUniformLocation(mandelbrot_program, "u_zoomSize");
+function SetUniformLocations(fractalProgram) {
+  zoom_center_uniform = gl.getUniformLocation(fractalProgram, "u_zoomCenter");
+  zoom_size_uniform = gl.getUniformLocation(fractalProgram, "u_zoomSize");
   max_iterations_uniform = gl.getUniformLocation(
-    mandelbrot_program,
+    fractalProgram,
     "u_maxIterations"
   );
-  fractal_type_uniform = gl.getUniformLocation(
-    mandelbrot_program,
-    "u_fractalType"
-  );
+  fractal_type_uniform = gl.getUniformLocation(fractalProgram, "u_fractalType");
   julia_value_uniform = gl.getUniformLocation(
-    mandelbrot_program,
+    fractalProgram,
     "u_julia_c_value"
   );
 }
 
-function ComplileShaders() {
-  canvas_element = document.getElementById("maincanvas");
-  gl = canvas_element.getContext("webgl");
+function ComplileShaders(iterativeFormula, condition) {
   var vertex_shader_src = document.getElementById("shader-vs").text;
   var fragment_shader_src = document.getElementById("shader-fs").text;
+  fragment_shader_src = fragment_shader_src.replace(
+    "%%%FORMULA_HERE%%%",
+    iterativeFormula
+  );
+
+  fragment_shader_src = fragment_shader_src.replace(
+    "%%%CONDITION_HERE%%%",
+    condition
+  );
+
+  console.log(fragment_shader_src);
+
   var vertex_shader = gl.createShader(gl.VERTEX_SHADER);
   var fragment_shader = gl.createShader(gl.FRAGMENT_SHADER);
   gl.shaderSource(vertex_shader, vertex_shader_src);
@@ -140,12 +129,17 @@ function ComplileShaders() {
   gl.compileShader(vertex_shader);
   console.log(gl.getShaderInfoLog(vertex_shader));
   gl.compileShader(fragment_shader);
-  console.log(gl.getShaderInfoLog(fragment_shader));
-  var mandelbrot_program = gl.createProgram();
-  gl.attachShader(mandelbrot_program, vertex_shader);
-  gl.attachShader(mandelbrot_program, fragment_shader);
-  gl.linkProgram(mandelbrot_program);
-  gl.useProgram(mandelbrot_program);
+  isProgramCompiled = gl.getShaderParameter(fragment_shader, gl.COMPILE_STATUS);
+  if (!isProgramCompiled) {
+    alert(gl.getShaderInfoLog(fragment_shader));
+    return undefined;
+  }
+
+  var fractalProgram = gl.createProgram();
+  gl.attachShader(fractalProgram, vertex_shader);
+  gl.attachShader(fractalProgram, fragment_shader);
+  gl.linkProgram(fractalProgram);
+  gl.useProgram(fractalProgram);
   /* create a vertex buffer for a full-screen triangle */
   var vertex_buf = gl.createBuffer(gl.ARRAY_BUFFER);
   gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buf);
@@ -156,10 +150,10 @@ function ComplileShaders() {
   );
   /* set up the position attribute */
   var position_attrib_location = gl.getAttribLocation(
-    mandelbrot_program,
+    fractalProgram,
     "a_Position"
   );
   gl.enableVertexAttribArray(position_attrib_location);
   gl.vertexAttribPointer(position_attrib_location, 2, gl.FLOAT, false, 0, 0);
-  return mandelbrot_program;
+  return fractalProgram;
 }
