@@ -29,14 +29,17 @@
       </div>
     </nav>
 
-    <div class="container" style="padding-top: 30px;">
+    <div class="container" style="padding-top: 10px;">
       <div class="row">
         <div class="col-sm-4">
-          <div class="card" style="width: 17rem; text-align: center;">
-            <div class="card-header" style="font-size: large;">
+          <div class="card" style="width: 17rem; text-align: left;">
+            <div
+              class="card-header"
+              style="font-size: large; text-align: center;"
+            >
               Settings
             </div>
-            <ul class="list-group list-group-flush">
+            <ul class="list-group list-group-flush" style="text-align: center;">
               <li class="list-group-item">
                 <button id="btnRestoreZoom" class="btn btn-dark">
                   Restore zoom
@@ -45,7 +48,37 @@
             </ul>
             <ul class="list-group list-group-flush">
               <li class="list-group-item" style="text-align: left;">
-                <div class="custom-file">
+                <label>Color palette:</label>
+                <div class="form-check">
+                  <label class="form-check-label">
+                    <input
+                      type="radio"
+                      id="singleColorPalette"
+                      class="form-check-input"
+                      name="optradio"
+                      checked
+                    />Single color
+                  </label>
+                </div>
+                <input
+                  type="color"
+                  id="colorPicker"
+                  class="form-control"
+                  style="text-align: center; margin-top: 10px;"
+                />
+
+                <div class="form-check" style="margin-top: 10px;">
+                  <label class="form-check-label">
+                    <input
+                      type="radio"
+                      if="filePaletteColor"
+                      class="form-check-input"
+                      name="optradio"
+                    />Choose from file
+                  </label>
+                </div>
+
+                <div class="custom-file" style="margin-top: 10px;">
                   <input
                     type="file"
                     class="custom-file-input"
@@ -59,13 +92,13 @@
             </ul>
             <ul class="list-group list-group-flush">
               <li class="list-group-item">
-                <label for="maxIter">Max iterations:</label>
+                <label>Max iterations:</label>
                 <input
                   type="number"
                   min="0"
                   step="1"
                   class="form-control"
-                  style="text-align: center;"
+                  style="text-align: right;"
                   id="maxIter"
                 />
               </li>
@@ -78,7 +111,8 @@
                   placeholder="pow(z, 2) + c"
                   rows="2"
                   cols="30"
-                  style="min-height: 30px;"
+                  class="form-control"
+                  style="min-height: 40px; text-align: right;"
                 ></textarea>
 
                 <label for="maxIter" style="margin-top: 20px;"
@@ -88,17 +122,18 @@
                   type="text"
                   placeholder="c_abs(z) > 2.0"
                   class="form-control"
-                  style="text-align: center;"
+                  style="text-align: right;"
                   id="breakCondition"
                 />
-
-                <button
-                  id="applyBtn"
-                  class="btn btn-dark"
-                  style="margin-top: 30px;"
-                >
-                  Apply
-                </button>
+                <div style="text-align: center;">
+                  <button
+                    id="applyBtn"
+                    class="btn btn-dark"
+                    style="margin-top: 10px;"
+                  >
+                    Apply
+                  </button>
+                </div>
               </li>
             </ul>
           </div>

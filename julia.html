@@ -15,7 +15,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
   </head>
 
-  <body onload="main()">
+  <body>
     <nav class="navbar navbar-expand-lg">
       <div class="collapse navbar-collapse">
         <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
@@ -32,15 +32,18 @@
       </div>
     </nav>
 
-    <div class="container" style="padding-top: 30px;">
+    <div class="container" style="padding-top: 10px;">
       <div class="row">
         <div class="col-sm-4">
-          <div class="card" style="width: 17rem; text-align: center;">
-            <div class="card-header" style="font-size: large;">
+          <div class="card" style="width: 17rem; text-align: left;">
+            <div
+              class="card-header"
+              style="font-size: large; text-align: center;"
+            >
               Settings
             </div>
             <ul class="list-group list-group-flush">
-              <li class="list-group-item">
+              <li class="list-group-item" style="text-align: center;">
                 <button id="btnRestoreZoom" class="btn btn-dark">
                   Restore zoom
                 </button>
@@ -48,7 +51,37 @@
             </ul>
             <ul class="list-group list-group-flush">
               <li class="list-group-item" style="text-align: left;">
-                <div class="custom-file">
+                <label>Color palette:</label>
+                <div class="form-check">
+                  <label class="form-check-label">
+                    <input
+                      type="radio"
+                      id="singleColorPalette"
+                      class="form-check-input"
+                      name="optradio"
+                      checked
+                    />Single color
+                  </label>
+                </div>
+                <input
+                  type="color"
+                  id="colorPicker"
+                  class="form-control"
+                  style="text-align: center; margin-top: 10px;"
+                />
+
+                <div class="form-check" style="margin-top: 10px;">
+                  <label class="form-check-label">
+                    <input
+                      type="radio"
+                      if="filePaletteColor"
+                      class="form-check-input"
+                      name="optradio"
+                    />Choose from file
+                  </label>
+                </div>
+
+                <div class="custom-file" style="margin-top: 10px;">
                   <input
                     type="file"
                     class="custom-file-input"
@@ -68,7 +101,7 @@
                   min="0"
                   step="1"
                   class="form-control"
-                  style="text-align: center;"
+                  style="text-align: right;"
                   id="maxIter"
                 />
               </li>
@@ -79,10 +112,9 @@
                 <input
                   type="text"
                   class="form-control"
-                  style="text-align: center;"
+                  style="text-align: right;"
                   id="juliaValue"
                 />
-                <br />
                 <label for="constA">Const A:</label>
                 <input
                   type="range"
@@ -104,14 +136,13 @@
                   name="constB"
                 />
                 <br />
-                <br />
                 <label for="juliaPower">Fractal power:</label>
                 <input
                   type="number"
                   min="2"
                   step="1"
                   class="form-control"
-                  style="text-align: center;"
+                  style="text-align: right;"
                   id="juliaPower"
                 />
               </li>
