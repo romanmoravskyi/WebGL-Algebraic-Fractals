@@ -56,7 +56,7 @@ $(document).ready(function() {
     console.log("Set julia value: " + cmplx);
   });
 
-  $("#juliaValue").on("input", () => {
+  function valueInputChanged() {
     let val = $("#juliaValue").val();
     try {
       let cmplx = math.complex(val);
@@ -69,7 +69,10 @@ $(document).ready(function() {
     } catch (error) {
       console.log(error);
     }
-  });
+  }
+
+  $("#juliaValue").on("input", valueInputChanged);
+  $("#juliaValue").on("change", valueInputChanged);
 
   $("#maxIter").on("input", () => {
     max_iterations = $("#maxIter").val();
