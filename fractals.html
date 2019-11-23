@@ -64,10 +64,10 @@
                   type="color"
                   id="colorPicker"
                   class="form-control"
-                  style="text-align: center; margin-top: 10px;"
+                  style="text-align: center; margin-top: 5px;"
                 />
 
-                <div class="form-check" style="margin-top: 10px;">
+                <div class="form-check" style="margin-top: 5px;">
                   <label class="form-check-label">
                     <input
                       type="radio"
@@ -78,7 +78,7 @@
                   </label>
                 </div>
 
-                <div class="custom-file" style="margin-top: 10px;">
+                <div class="custom-file" style="margin-top: 5px;">
                   <input
                     type="file"
                     class="custom-file-input"
@@ -88,6 +88,11 @@
                     >Choose pallete file</label
                   >
                 </div>
+
+                <div
+                  id="paletteContainer"
+                  style="width: auto; height: 20px; margin-top: 5px;"
+                ></div>
               </li>
             </ul>
             <ul class="list-group list-group-flush">
@@ -115,7 +120,7 @@
                   style="min-height: 40px; text-align: right;"
                 ></textarea>
 
-                <label for="maxIter" style="margin-top: 20px;"
+                <label for="maxIter" style="margin-top: 10px;"
                   >Break condition:</label
                 >
                 <input
@@ -160,7 +165,7 @@
       $(this)
         .siblings(".custom-file-label")
         .addClass("selected")
-        .html(fileName);
+        .html("Palette loaded");
     });
   </script>
 
@@ -406,9 +411,15 @@
         return a + b * cos( 6.28318*(c * t + d) );
     }
 
+    #define MAX_COLORS 256
+
     uniform vec2 u_zoomCenter;
     uniform float u_zoomSize;
     uniform int u_maxIterations;
+    uniform int u_model_type;
+    uniform int u_colors_length;
+    uniform vec3 u_color;
+    uniform float u_colors[MAX_COLORS * 3];
     uniform vec2 u_julia_c_value;
 
     void main() {
@@ -433,16 +444,21 @@
         }
 
         if(!error) {
+          if(u_model_type == 0) {
             vec3 paletteColor =
             palette(
                     float(iterations) / float(u_maxIterations),
                     vec3(0.0),
                     vec3(0.59, 0.55, 0.75),
                     vec3(0.1, 0.2, 0.3),
-                    vec3(0.75));
+                    vec3(0.75)) * u_color;
 
             gl_FragColor = escaped ? vec4(paletteColor, 1.0)
             : vec4(vec3(0.85, 0.99, 1.0), 1.0);
+          }
+          else {
+            gl_FragColor = vec4(u_colors[0], u_colors[1], u_colors[2], 1.0);
+          }
         }
         else {
             gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
