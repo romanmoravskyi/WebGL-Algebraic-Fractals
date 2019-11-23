@@ -7,8 +7,10 @@ var zoom_factor = 1.0;
 var max_iterations = 1000;
 var initial_max_iter = max_iterations;
 var isProgramCompiled = false;
-var palette;
-var singleColor;
+var palette = [[0.0, 0.0, 0.0]];
+var singleColor = [0.0, 0.0, 0.0];
+// 0 - single, 1 - palette
+var modelType = 0;
 
 // canvas elements
 var canvas_element;
@@ -20,6 +22,10 @@ var zoom_size_uniform;
 var max_iterations_uniform;
 var fractal_type_uniform;
 var julia_value_uniform;
+var model_type_uniform;
+var colors_uniform;
+var colors_length_uniform;
+var single_color_uniform;
 
 $(document).ready(function() {
   $("#btnRestoreZoom").click(function() {
@@ -31,6 +37,19 @@ $(document).ready(function() {
     }
   });
 
+  $("#colorPicker").on("input", () => {
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(
+      $("#colorPicker").val()
+    );
+    let rgb = {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    };
+    singleColor = [rgb.r, rgb.g, rgb.b];
+    modelType = 0;
+    updateColorModel();
+  });
   $("#maxIter").val(max_iterations);
 
   $("#maxIter").on("input", () => {
@@ -76,12 +95,55 @@ $(document).ready(function() {
   };
 });
 
+function readImage() {
+  if (this.files && this.files[0]) {
+    let fileReader = new FileReader();
+
+    fileReader.onload = function(e) {
+      let img = new Image();
+
+      img.addEventListener("load", function() {
+        let canvas = document.createElement("canvas");
+        let context = canvas.getContext("2d");
+        canvas.width = img.width;
+        canvas.height = img.height;
+        context.drawImage(img, 0, 0);
+        palette = toPalette(
+          context.getImageData(0, 0, img.width, img.height).data
+        );
+
+        modelType = 1;
+        updateColorModel();
+      });
+
+      img.src = e.target.result;
+    };
+
+    fileReader.readAsDataURL(this.files[0]);
+  }
+}
+
+function updateColorModel() {
+  window.requestAnimationFrame(renderFrame);
+}
+
 function renderFrame() {
   // bind inputs & render frame
   const MinAutoFrames = 1000;
   gl.uniform2f(zoom_center_uniform, zoom_center[0], zoom_center[1]);
   gl.uniform1f(zoom_size_uniform, zoom_size);
   gl.uniform1i(max_iterations_uniform, max_iterations);
+  gl.uniform1i(model_type_uniform, modelType);
+  gl.uniform3f(
+    single_color_uniform,
+    singleColor[0],
+    singleColor[1],
+    singleColor[2]
+  );
+  let tempPalette = [];
+  palette.map(c => tempPalette.push(...c));
+  gl.uniform1fv(colors_uniform, new Float32Array(tempPalette));
+  gl.uniform1f(colors_length_uniform, palette.length);
   //gl.uniform2f(julia_value_uniform, c[0], c[1]);
   //gl.uniform2f(size_uniform, c_width, c_height);
   //gl.uniform1i(fractal_type_uniform, type);
@@ -109,6 +171,13 @@ function SetUniformLocations(fractalProgram) {
     fractalProgram,
     "u_julia_c_value"
   );
+  model_type_uniform = gl.getUniformLocation(fractalProgram, "u_model_type");
+  colors_uniform = gl.getUniformLocation(fractalProgram, "u_colors");
+  colors_length_uniform = gl.getUniformLocation(
+    fractalProgram,
+    "u_colors_length"
+  );
+  single_color_uniform = gl.getUniformLocation(fractalProgram, "u_color");
 }
 
 function ComplileShaders(iterativeFormula, condition) {
@@ -123,8 +192,6 @@ function ComplileShaders(iterativeFormula, condition) {
     "%%%CONDITION_HERE%%%",
     condition
   );
-
-  console.log(fragment_shader_src);
 
   var vertex_shader = gl.createShader(gl.VERTEX_SHADER);
   var fragment_shader = gl.createShader(gl.FRAGMENT_SHADER);
@@ -162,76 +229,31 @@ function ComplileShaders(iterativeFormula, condition) {
   return fractalProgram;
 }
 
-function quantile(imgData) {
-  let colors = [];
-
-  for (let i = 0; i < imgData.length; i += 4) {
-    let color = [imgData[i], imgData[i + 1], imgData[i + 2]];
-
-    if (!containsColor(colors, color)) {
-      colors.push(color);
-    }
-  }
-
-  let currentPalette = q(colors, 1, 32);
-  palette = currentPalette;
-
-  //console.log(currentPalette.length);
-
-  let sortedRgbArr = currentPalette
-    .map(function(c, i) {
+function displayPalette(container, palette) {
+  let sortedRgbArr = palette
+    .map((c, i) => {
       return { color: rgbToHsl(c), index: i };
     })
-    .sort(function(c1, c2) {
-      return c1.color[0] - c2.color[0];
-    })
-    .map(function(data) {
-      return palette[data.index];
-    });
+    .sort((c1, c2) => c1.color[0] - c2.color[0])
+    .map(data => palette[data.index]);
 
-  display("#paletteContainer", sortedRgbArr);
-}
-
-function display(container, arr) {
   container = document.querySelector(container);
   while (container.firstChild) {
     container.removeChild(container.firstChild);
   }
 
-  let cwidth = $(container).width() / arr.length;
+  let cwidth = $(container).width() / sortedRgbArr.length;
 
-  arr.forEach(function(c) {
+  sortedRgbArr.forEach(c => {
     let el = document.createElement("div");
     el.style.backgroundColor = "rgb(" + c.join(", ") + ")";
-    el.style.width = `${cwidth.toFixed(0)}px`;
+    el.style.width = `${cwidth}px`;
     el.style.height = container.style.height;
     el.style.display = "inline-block";
     container.appendChild(el);
   });
-}
 
-function containsColor(colors, color) {
-  if (colors.length === 0) {
-    return false;
-  }
-
-  let containsColor = false;
-
-  for (let i = 0; i < colors.length; ++i) {
-    if (colors[i].length !== color.length) {
-      containsColor = false;
-      break;
-    }
-    if (
-      colors[i][0] === color[0] &&
-      colors[i][1] === color[1] &&
-      colors[i][2] === color[2]
-    ) {
-      containsColor = true;
-      break;
-    }
-  }
-  return containsColor;
+  return sortedRgbArr;
 }
 
 function colorMinMax(colors) {
@@ -288,21 +310,17 @@ function colorMinMax(colors) {
   };
 }
 
-function q(colors, cuboidsNumber, maxCuboids) {
+function quantile(colors, colorsNumber, maxColors) {
   let palette = [];
 
-  let cs = colorMinMax(colors);
-  let cuboids, median, colorPos;
-
-  if (cuboidsNumber > maxCuboids) {
-    palette.push([
-      (cs.minR + cs.maxR) / 2,
-      (cs.minG + cs.maxG) / 2,
-      (cs.minB + cs.maxB) / 2
-    ]);
+  if (colorsNumber > maxColors) {
+    palette.push(avarageColor(colors));
 
     return palette;
   }
+
+  let cs = colorMinMax(colors);
+  let cuboids, median, colorPos;
 
   if (cs.lenRed >= cs.lenBlue && cs.lenRed >= cs.lenGreen) {
     median = (cs.minR + cs.maxR) / 2;
@@ -318,14 +336,14 @@ function q(colors, cuboidsNumber, maxCuboids) {
   cuboids = getColors(colors, c => c[colorPos] <= median);
 
   if (cuboids.first.length > 1) {
-    let firstPalette = q(cuboids.first, cuboidsNumber * 2, maxCuboids);
+    let firstPalette = quantile(cuboids.first, colorsNumber + 1, maxColors);
     palette.push(...firstPalette);
   } else if (cuboids.first.length === 1) {
     palette.push(cuboids.first[0]);
   }
 
   if (cuboids.second.length > 1) {
-    let secondPalette = q(cuboids.second, cuboidsNumber * 2, maxCuboids);
+    let secondPalette = quantile(cuboids.second, colorsNumber + 1, maxColors);
     palette.push(...secondPalette);
   } else if (cuboids.second.length === 1) {
     palette.push(cuboids.second[0]);
@@ -350,6 +368,22 @@ function getColors(colors, f) {
     first: first,
     second: second
   };
+}
+
+function avarageColor(colors) {
+  let ar = colors[0][0],
+    ag = colors[0][1],
+    ab = colors[0][2];
+
+  for (let i = 1; i < colors.length; ++i) {
+    for (let j = colors[i][3]; j < colors[i][3].length; ++j) {
+      ar = (ar + colors[i][0]) / 2;
+      ag = (ag + colors[i][1]) / 2;
+      ab = (ab + colors[i][2]) / 2;
+    }
+  }
+
+  return [ar, ag, ab];
 }
 
 function rgbToHsl(c) {
@@ -383,25 +417,37 @@ function rgbToHsl(c) {
   return new Array(h * 360, s * 100, l * 100);
 }
 
-function readImage() {
-  if (this.files && this.files[0]) {
-    let fileReader = new FileReader();
+function toPalette(imgData) {
+  let hash = {};
 
-    fileReader.onload = function(e) {
-      let img = new Image();
+  for (let i = 0; i < imgData.length; i += 4) {
+    addColor(`${imgData[i]} ${imgData[i + 1]} ${imgData[i + 2]}`);
+  }
 
-      img.addEventListener("load", function() {
-        let canvas = document.createElement("canvas");
-        let context = canvas.getContext("2d");
-        canvas.width = img.width;
-        canvas.height = img.height;
-        context.drawImage(img, 0, 0);
-        quantile(context.getImageData(0, 0, img.width, img.height).data);
-      });
+  let colors = [];
 
-      img.src = e.target.result;
-    };
+  for (let key in hash) {
+    let color = key.split(" ").map(el => {
+      return Number(el);
+    });
+    color.push(hash[key]);
+    colors.push(color);
+  }
 
-    fileReader.readAsDataURL(this.files[0]);
+  let currentPalette = quantile(colors, 0, 6);
+
+  console.log(`Number of unique colors: ${colors.length}`);
+  console.log(`Palette size: ${currentPalette.length}`);
+
+  return displayPalette("#paletteContainer", currentPalette);
+
+  function addColor(value) {
+    let count = 0;
+    if (hash[value]) {
+      count = hash[value];
+    } else {
+      count = 1;
+    }
+    hash[value] = count + 1;
   }
 }
