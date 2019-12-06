@@ -8,6 +8,9 @@ var zoom_factor = 1.0;
 var max_iterations = 100;
 var initial_max_iter = max_iterations;
 var fractalPower = 2;
+var singleColor = [0.0, 0.0, 0.0];
+// 0 - singleColor, 1 - colorPalette
+var modelType = -1;
 
 // canvas elements
 var canvas_element;
@@ -19,6 +22,8 @@ var zoom_size_uniform;
 var max_iterations_uniform;
 var u_fractal_power_uniform;
 var julia_value_uniform;
+var model_type_uniform;
+var single_color_uniform;
 
 $(document).ready(function() {
   $("#btnRestoreZoom").click(function() {
@@ -36,6 +41,23 @@ $(document).ready(function() {
     fractalPower = $("#juliaPower").val();
     window.requestAnimationFrame(renderFrame);
     console.log("Set julia power: " + fractalPower);
+  });
+
+  $("#colorPicker").on("input", () => {
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(
+      $("#colorPicker").val()
+    );
+
+    let pickedColor = {
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16)
+    };
+    singleColor = [pickedColor.r, pickedColor.g, pickedColor.b];
+    modelType = 0;
+
+    window.requestAnimationFrame(renderFrame);
+    
   });
 
   $("#constA").on("input", () => {
@@ -119,9 +141,13 @@ var renderFrame = function() {
   gl.uniform1i(max_iterations_uniform, max_iterations);
   gl.uniform1i(u_fractal_power_uniform, fractalPower);
   gl.uniform2f(julia_value_uniform, juliaValue[0], juliaValue[1]);
-  //gl.uniform2f(size_uniform, c_width, c_height);
-  //gl.uniform1i(fractal_type_uniform, type);
-  //gl.uniform1i(color_scheme_uniform, colorSchemeType);
+  gl.uniform1i(model_type_uniform, modelType);
+  gl.uniform3f(
+    single_color_uniform,
+    singleColor[0],
+    singleColor[1],
+    singleColor[2]
+  );
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -153,6 +179,8 @@ function SetUniformLocations(mandelbrot_program) {
     mandelbrot_program,
     "u_julia_c_value"
   );
+  model_type_uniform = gl.getUniformLocation(mandelbrot_program, "u_model_type");
+  single_color_uniform = gl.getUniformLocation(mandelbrot_program, "u_color");
 }
 
 function ComplileShaders() {
