@@ -1,175 +1,106 @@
 <html>
-  <head>
-    <title>Algebraic Fractals</title>
-    <link rel="icon" href="favicon.ico" />
-    <link
-      rel="stylesheet"
-      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
-    />
-    <link rel="stylesheet" href="styles.css" />
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
-    <script src="fractals.js"></script>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-  </head>
 
-  <body>
-    <nav class="navbar navbar-expand-lg">
-      <div class="collapse navbar-collapse">
-        <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
-          <li class="nav-item active">
-            <a href="fractals.html">
-              <img src="images/logo.png" width="40" height="40" />
-            </a>
-          </li>
-        </ul>
-        <a style="color:white; margin: 25;" href="julia.html">Julia</a>
-        <a style="color:white; margin: 25;" href="#">Help</a>
-      </div>
-    </nav>
+<head>
+  <title>Algebraic Fractals</title>
+  <link rel="icon" href="favicon.ico" />
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+  <script src="fractals.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
 
-    <div class="container" style="padding-top: 10px;">
-      <div class="row">
-        <div class="col-sm-4">
-          <div class="card" style="width: 17rem; text-align: left;">
-            <div
-              class="card-header"
-              style="font-size: large; text-align: center;"
-            >
-              Settings
-            </div>
-            <ul class="list-group list-group-flush" style="text-align: center;">
-              <li class="list-group-item">
-                <button id="btnRestoreZoom" class="btn btn-dark">
-                  Restore zoom
-                </button>
-              </li>
-            </ul>
-            <ul class="list-group list-group-flush">
-              <li class="list-group-item" style="text-align: left;">
-                <label>Color palette:</label>
-                <div class="form-check">
-                  <label class="form-check-label">
-                    <input
-                      type="radio"
-                      id="singleColorPalette"
-                      class="form-check-input"
-                      name="optradio"
-                      checked
-                    />Single color
-                  </label>
-                </div>
-                <input
-                  type="color"
-                  id="colorPicker"
-                  class="form-control"
-                  style="text-align: center; margin-top: 5px;"
-                />
+<body>
+  <nav class="navbar navbar-expand-lg">
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
+        <li class="nav-item active">
+          <a href="fractals.html">
+            <img src="images/logo.png" width="40" height="40" />
+          </a>
+        </li>
+      </ul>
+      <a style="color:white; margin: 25;" href="julia.html">Julia</a>
+    </div>
+  </nav>
 
-                <div class="form-check" style="margin-top: 5px;">
-                  <label class="form-check-label">
-                    <input
-                      type="radio"
-                      if="filePaletteColor"
-                      class="form-check-input"
-                      name="optradio"
-                    />Choose from file
-                  </label>
-                </div>
-
-                <div class="custom-file" style="margin-top: 5px;">
-                  <input
-                    type="file"
-                    class="custom-file-input"
-                    id="customFile"
-                  />
-                  <label class="custom-file-label" for="customFile"
-                    >Choose pallete file</label
-                  >
-                </div>
-
-                <div
-                  id="paletteContainer"
-                  style="width: auto; height: 20px; margin-top: 5px;"
-                ></div>
-              </li>
-            </ul>
-            <ul class="list-group list-group-flush">
-              <li class="list-group-item">
-                <label>Max iterations:</label>
-                <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  class="form-control"
-                  style="text-align: right;"
-                  id="maxIter"
-                />
-              </li>
-            </ul>
-            <ul class="list-group list-group-flush">
-              <li class="list-group-item">
-                <label for="formulaInput">Iterative formula:</label>
-                <textarea
-                  id="formulaInput"
-                  placeholder="pow(z, 2) + c"
-                  rows="2"
-                  cols="30"
-                  class="form-control"
-                  style="min-height: 40px; text-align: right;"
-                ></textarea>
-
-                <label for="maxIter" style="margin-top: 10px;"
-                  >Break condition:</label
-                >
-                <input
-                  type="text"
-                  placeholder="c_abs(z) > 2.0"
-                  class="form-control"
-                  style="text-align: right;"
-                  id="breakCondition"
-                />
-                <div style="text-align: center;">
-                  <button
-                    id="applyBtn"
-                    class="btn btn-dark"
-                    style="margin-top: 10px;"
-                  >
-                    Apply
-                  </button>
-                </div>
-              </li>
-            </ul>
+  <div class="container" style="padding-top: 10px;">
+    <div class="row">
+      <div class="col-sm-4">
+        <div class="card" style="width: 17rem; text-align: left;">
+          <div class="card-header" style="font-size: large; text-align: center;">
+            Settings
           </div>
+          <ul class="list-group list-group-flush" style="text-align: center;">
+            <li class="list-group-item">
+              <button id="btnRestoreZoom" class="btn btn-dark">
+                Restore zoom
+              </button>
+            </li>
+          </ul>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item" style="text-align: left;">
+              <label>Pick single color:</label>
+              <input type="color" id="colorPicker" class="form-control" style="text-align: center; margin-top: 5px;" />
+
+              <label style="margin-top: 5px;">Load palette:</label>
+              <div class="custom-file" style="margin-top: 5px;">
+                <input type="file" class="custom-file-input" id="customFile" />
+                <label class="custom-file-label" for="customFile">Choose pallete file</label>
+              </div>
+
+              <div id="paletteContainer" style="width: auto; height: 30px; margin-top: 15px;"></div>
+            </li>
+          </ul>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item">
+              <label>Max iterations:</label>
+              <input type="number" min="0" step="1" class="form-control" style="text-align: right;" id="maxIter" />
+            </li>
+          </ul>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item">
+              <label for="formulaInput">Iterative formula:</label>
+              <textarea id="formulaInput" placeholder="pow(z, 2) + c" rows="2" cols="30" class="form-control"
+                style="min-height: 40px; text-align: right;">
+pow(z, 2) + c</textarea>
+
+              <label for="maxIter" style="margin-top: 10px;">Break condition:</label>
+              <input type="text" placeholder="c_abs(z) > 2.0" value="c_abs(z) > 2.0" class="form-control"
+                style="text-align: right;" id="breakCondition" />
+              <div style="text-align: center;">
+                <button id="applyBtn" class="btn btn-dark" style="margin-top: 10px;">
+                  Apply
+                </button>
+              </div>
+            </li>
+          </ul>
         </div>
-        <div class="col-sm-8">
-          <canvas
-            id="maincanvas"
-            width="600"
-            height="600"
-            style="border:3px solid whitesmoke;"
-            >canvas not supported</canvas
-          >
-        </div>
+      </div>
+      <div class="col-sm-8">
+        <canvas id="maincanvas" width="600" height="600" style="border:3px solid whitesmoke;">canvas not
+          supported</canvas>
       </div>
     </div>
-  </body>
+  </div>
+</body>
 
-  <script>
-    $(".custom-file-input").on("change", function() {
-      var fileName = $(this)
-        .val()
-        .split("\\")
-        .pop();
-      $(this)
-        .siblings(".custom-file-label")
-        .addClass("selected")
-        .html("Palette loaded");
-    });
-  </script>
+<script>
+  $(".custom-file-input").on("change", function () {
+    var fileName = $(this)
+      .val()
+      .split("\\")
+      .pop();
+    $(this)
+      .siblings(".custom-file-label")
+      .addClass("selected")
+      .html("Palette loaded");
+  });
+</script>
 
-  <script id="shader-vs" type="x-shader/x-vertex">
+<script id="shader-vs" type="x-shader/x-vertex">
     precision highp float;
     attribute vec2 a_Position;
     void main() {
@@ -177,8 +108,17 @@
     }
   </script>
 
-  <script id="shader-fs" type="x-shader/x-fragment">
+<script id="shader-fs" type="x-shader/x-fragment">
     precision highp float;
+
+    uniform vec2 u_zoomCenter;
+    uniform float u_zoomSize;
+    uniform int u_maxIterations;
+    uniform int u_model_type;
+    uniform int u_colors_length;
+    uniform vec3 u_color;
+    uniform float u_colors[256 * 3];
+    uniform vec2 u_julia_c_value;
 
     const float PI = 3.1415926535897932384626433832795;
     const float E = 2.7182818284590452353602874713527;
@@ -188,6 +128,7 @@
     const vec2 c_nan = vec2(10000.0, 20000.0);
 
     bool error;
+    bool gtemp = false;
 
     #define c_abs(a) length(a)
 
@@ -411,16 +352,27 @@
         return a + b * cos( 6.28318*(c * t + d) );
     }
 
-    #define MAX_COLORS 256
+    int m(int x, int y) {
+        int q = x / y;
+	      int p = q * y;
+	      return x - p;
+    }
 
-    uniform vec2 u_zoomCenter;
-    uniform float u_zoomSize;
-    uniform int u_maxIterations;
-    uniform int u_model_type;
-    uniform int u_colors_length;
-    uniform vec3 u_color;
-    uniform float u_colors[MAX_COLORS * 3];
-    uniform vec2 u_julia_c_value;
+    vec3 getColor(int iterations, bool escaped) {
+      vec3 paletteColor = palette(
+        float(iterations) / float(u_maxIterations),
+        vec3(0.0),
+        vec3(0.59, 0.55, 0.75),
+        vec3(0.1, 0.2, 0.3),
+        vec3(0.75));
+
+      if(u_model_type == 0) {
+        return escaped ? paletteColor * u_color : vec3(0.85, 0.99, 1.0);
+      }
+      else {
+        return escaped ? paletteColor : vec3(0.85, 0.99, 1.0);
+      }
+    }
 
     void main() {
         vec2 uv = gl_FragCoord.xy / vec2(600.0, 600.0);
@@ -443,27 +395,18 @@
             }
         }
 
+        vec3 pickedColor = vec3(0.0, 0.0, 0.0);
+
         if(!error) {
-          if(u_model_type == 0) {
-            vec3 paletteColor =
-            palette(
-                    float(iterations) / float(u_maxIterations),
-                    vec3(0.0),
-                    vec3(0.59, 0.55, 0.75),
-                    vec3(0.1, 0.2, 0.3),
-                    vec3(0.75)) * u_color;
-
-            gl_FragColor = escaped ? vec4(paletteColor, 1.0)
-            : vec4(vec3(0.85, 0.99, 1.0), 1.0);
-          }
-          else {
-            gl_FragColor = vec4(u_colors[0], u_colors[1], u_colors[2], 1.0);
-          }
-        }
-        else {
-            gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+          pickedColor = getColor(iterations, escaped);
         }
 
+        gl_FragColor = vec4(pickedColor, 1.0);
+
+        if(gtemp) {
+          gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);
+        }
     }
   </script>
+
 </html>
