@@ -7,12 +7,12 @@ var zoom_factor = 1.0;
 var max_iterations = 1000;
 var initial_max_iter = max_iterations;
 var isProgramCompiled = false;
-var palette = [[0.0, 0.0, 0.0]];
+var colorPalette = [[1.0, 1.0, 1.0]];
 var singleColor = [0.0, 0.0, 0.0];
-// 0 - single, 1 - palette
-var modelType = 0;
+// 0 - singleColor, 1 - colorPalette
+var modelType = -1;
 
-// canvas elements
+// tempCanvas elements
 var canvas_element;
 var gl;
 
@@ -34,6 +34,8 @@ $(document).ready(function() {
       zoom_size = 1.0;
       window.requestAnimationFrame(renderFrame);
       console.log("Restoring zoom");
+    } else {
+      alert("Iterative formula and break condition are not specified!");
     }
   });
 
@@ -41,15 +43,20 @@ $(document).ready(function() {
     var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(
       $("#colorPicker").val()
     );
-    let rgb = {
+
+    let pickedColor = {
       r: parseInt(result[1], 16),
       g: parseInt(result[2], 16),
       b: parseInt(result[3], 16)
     };
-    singleColor = [rgb.r, rgb.g, rgb.b];
+    singleColor = [pickedColor.r, pickedColor.g, pickedColor.b];
     modelType = 0;
-    updateColorModel();
+
+    if (isProgramCompiled) {
+      window.requestAnimationFrame(renderFrame);
+    }
   });
+
   $("#maxIter").val(max_iterations);
 
   $("#maxIter").on("input", () => {
@@ -57,6 +64,8 @@ $(document).ready(function() {
       max_iterations = $("#maxIter").val();
       window.requestAnimationFrame(renderFrame);
       console.log("Set max iter: " + max_iterations);
+    } else {
+      alert("Iterative formula and break condition are not specified!");
     }
   });
 
@@ -64,8 +73,10 @@ $(document).ready(function() {
     let formula = $("#formulaInput").val();
     let breakCondition = $("#breakCondition").val();
     let fractalProgram = ComplileShaders(formula, breakCondition);
-    SetUniformLocations(fractalProgram);
-    renderFrame();
+    if (isProgramCompiled) {
+      SetUniformLocations(fractalProgram);
+      renderFrame();
+    }
   });
 
   $("#customFile").change(readImage);
@@ -100,32 +111,34 @@ function readImage() {
     let fileReader = new FileReader();
 
     fileReader.onload = function(e) {
-      let img = new Image();
+      let inputImage = new Image();
 
-      img.addEventListener("load", function() {
-        let canvas = document.createElement("canvas");
-        let context = canvas.getContext("2d");
-        canvas.width = img.width;
-        canvas.height = img.height;
-        context.drawImage(img, 0, 0);
-        palette = toPalette(
-          context.getImageData(0, 0, img.width, img.height).data
+      inputImage.addEventListener("load", function() {
+        let tempCanvas = document.createElement("canvas");
+        let context = tempCanvas.getContext("2d");
+
+        tempCanvas.width = inputImage.width;
+        tempCanvas.height = inputImage.height;
+        context.drawImage(inputImage, 0, 0);
+
+        colorPalette = toPalette(
+          context.getImageData(0, 0, inputImage.width, inputImage.height).data
         );
+        //modelType = 1;
 
-        modelType = 1;
-        updateColorModel();
+        //if (isProgramCompiled) {
+        //  window.requestAnimationFrame(renderFrame);
+        //}
       });
 
-      img.src = e.target.result;
+      inputImage.src = e.target.result;
     };
 
     fileReader.readAsDataURL(this.files[0]);
   }
 }
 
-function updateColorModel() {
-  window.requestAnimationFrame(renderFrame);
-}
+function updateColorModel() {}
 
 function renderFrame() {
   // bind inputs & render frame
@@ -140,14 +153,16 @@ function renderFrame() {
     singleColor[1],
     singleColor[2]
   );
-  let tempPalette = [];
-  palette.map(c => tempPalette.push(...c));
-  gl.uniform1fv(colors_uniform, new Float32Array(tempPalette));
-  gl.uniform1f(colors_length_uniform, palette.length);
-  //gl.uniform2f(julia_value_uniform, c[0], c[1]);
-  //gl.uniform2f(size_uniform, c_width, c_height);
-  //gl.uniform1i(fractal_type_uniform, type);
-  //gl.uniform1i(color_scheme_uniform, colorSchemeType);
+
+  /*var floatArray = Array(256 * 3).fill(1.0);
+  for (let i = 0; i < colorPalette.length; ++i) {
+    floatArray[3 * i] = colorPalette[i][0];
+    floatArray[3 * i + 1] = colorPalette[i][1];
+    floatArray[3 * i + 2] = colorPalette[i][2];
+  }
+  //colorPalette.map(c => tempPalette.push(...c));
+  gl.uniform1fv(colors_uniform, new Float32Array(floatArray));
+  gl.uniform1i(colors_length_uniform, colorPalette.length);*/
   gl.clearColor(0.0, 0.0, 0.0, 1.0);
   gl.clear(gl.COLOR_BUFFER_BIT);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -229,13 +244,13 @@ function ComplileShaders(iterativeFormula, condition) {
   return fractalProgram;
 }
 
-function displayPalette(container, palette) {
-  let sortedRgbArr = palette
+function displayPalette(container, colorPalette) {
+  let sortedRgbArr = colorPalette
     .map((c, i) => {
       return { color: rgbToHsl(c), index: i };
     })
     .sort((c1, c2) => c1.color[0] - c2.color[0])
-    .map(data => palette[data.index]);
+    .map(data => colorPalette[data.index]);
 
   container = document.querySelector(container);
   while (container.firstChild) {
@@ -311,12 +326,12 @@ function colorMinMax(colors) {
 }
 
 function quantile(colors, colorsNumber, maxColors) {
-  let palette = [];
+  let colorPalette = [];
 
   if (colorsNumber > maxColors) {
-    palette.push(avarageColor(colors));
+    colorPalette.push(avarageColor(colors));
 
-    return palette;
+    return colorPalette;
   }
 
   let cs = colorMinMax(colors);
@@ -337,19 +352,27 @@ function quantile(colors, colorsNumber, maxColors) {
 
   if (cuboids.first.length > 1) {
     let firstPalette = quantile(cuboids.first, colorsNumber + 1, maxColors);
-    palette.push(...firstPalette);
+    colorPalette.push(...firstPalette);
   } else if (cuboids.first.length === 1) {
-    palette.push(cuboids.first[0]);
+    colorPalette.push([
+      cuboids.first[0][0],
+      cuboids.first[0][1],
+      cuboids.first[0][2]
+    ]);
   }
 
   if (cuboids.second.length > 1) {
     let secondPalette = quantile(cuboids.second, colorsNumber + 1, maxColors);
-    palette.push(...secondPalette);
+    colorPalette.push(...secondPalette);
   } else if (cuboids.second.length === 1) {
-    palette.push(cuboids.second[0]);
+    colorPalette.push([
+      cuboids.second[0][0],
+      cuboids.second[0][1],
+      cuboids.second[0][2]
+    ]);
   }
 
-  return palette;
+  return colorPalette;
 }
 
 function getColors(colors, f) {
@@ -376,10 +399,12 @@ function avarageColor(colors) {
     ab = colors[0][2];
 
   for (let i = 1; i < colors.length; ++i) {
-    for (let j = colors[i][3]; j < colors[i][3].length; ++j) {
-      ar = (ar + colors[i][0]) / 2;
-      ag = (ag + colors[i][1]) / 2;
-      ab = (ab + colors[i][2]) / 2;
+    if (colors[i][0] != 0 && colors[i][1] != 0 && colors[i][2] != 0) {
+      for (let j = colors[i][3]; j < colors[i][3].length; ++j) {
+        ar = (ar + colors[i][0]) / 2;
+        ag = (ag + colors[i][1]) / 2;
+        ab = (ab + colors[i][2]) / 2;
+      }
     }
   }
 
